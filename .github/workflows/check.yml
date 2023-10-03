@@ -55,4 +55,5 @@ jobs:
     with:
       target: ${{ inputs.target }}
       tag: ${{ needs.build.outputs.tag }}
+      branch: ${{ inputs.branch-name }}
     secrets: inherit
