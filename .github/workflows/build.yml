@@ -33,6 +33,9 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.8.1
 
+      - name: Installing package.json dependencies
+        run: npm i
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code from repo
         uses: actions/checkout@v4
@@ -88,12 +91,7 @@ jobs:
           --prerelease
         
       - name: Triggering build
-        env:
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        run: |
-          echo "$(cat ./package.json)"
-          npm i
-          npm run build -- $CLIENT_ID
+        run: npm run build
 
       - name: Persist tag version
         env: 
