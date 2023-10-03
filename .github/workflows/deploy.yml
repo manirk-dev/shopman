@@ -39,7 +39,17 @@ jobs:
       - name: Installing package.json dependencies
         run: npm i
 
+      - name: Prepare toml for deployment
+        shell: bash
+        run: |
+          touch shopify.app.toml
+          cp shopify.app.${{ inputs.target }}.toml shopify.app.toml
+          sed -i "s/REPLACE/${{ secrets.CLIENT_ID }}/g" shopify.app.toml
+          
       - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
         run: |
           npm i
-          npm run deploy -- --version ${{ inputs.tag }} --client-id ${{ secrets.CLIENT_ID }} --message "Deploying first version"  -f
+          npm run deploy -- --version ${{ inputs.tag }} --message "Deploying first version"  -f
+
+      - name: Clean-up after deploy
+        run: rm shopify.app.toml

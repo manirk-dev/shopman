@@ -93,14 +93,3 @@ jobs:
         
       - name: Triggering build
         run: npm run build
-
-      - name: Persist tag version
-        env: 
-          tag: ${{ steps.prepare-tag.outputs.tag-version }}
-        run: |
-          git fetch origin ${{ inputs.branch }}
-          sed -i "s/${{ inputs.target }}=[^ ]*/${{ inputs.target }}=$tag/g" ${{ github.workspace }}/version.ini
-          git status
-          git add .
-          git commit -m "updated ${{ inputs.target }} version to $tag"
-          git push origin ${{ inputs.branch }}
