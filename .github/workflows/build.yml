@@ -23,12 +23,15 @@ on:
 
 jobs:
   build:
-    runs-on: node:20-alpine
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.prepare-tag.outputs.tag-version }}
 
     environment: ${{ inputs.target }}
     steps:
+      # Install node
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.8.1
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code from repo
