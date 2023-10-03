@@ -1,0 +1,27 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build and deploy
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build-env:
+    strategy:
+      matrix:
+        target: [ development, staging, production ]
+    name: ${{ matrix.target }} build on ${{ github.head_ref || github.ref_name }} branch
+    uses: ./.github/workflows/check.yml
+    with:
+      target: ${{ matrix.target }}
+      branch-name: ${{ github.head_ref || github.ref_name }}
+    secrets: inherit
+    
+    # The type of runner that the job will run on
+    
