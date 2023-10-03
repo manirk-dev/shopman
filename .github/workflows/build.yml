@@ -29,12 +29,6 @@ jobs:
 
     environment: ${{ inputs.target }}
     steps:
-      # Install node
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3.8.1
-
-      - name: Installing package.json dependencies
-        run: npm i
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code from repo
@@ -43,6 +37,13 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
+
+      # Install node
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.8.1
+
+      - name: Installing package.json dependencies
+        run: npm i
 
       - name: Config git globals
         run: |
