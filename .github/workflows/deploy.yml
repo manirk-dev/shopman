@@ -52,6 +52,7 @@ jobs:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.CLIENT_ID }}
           SHOPIFY_API_KEY: ${{ secrets.CLIENT_ID }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
         run: |
           npm i
-          npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message ${{ github.event.head_commit.message }}  -f
+          npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message $MESSAGE -f
