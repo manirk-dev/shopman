@@ -22,6 +22,7 @@ jobs:
     steps:
       - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
         run: |
+          npm i
           npm run deploy \
           -- --version ${{ inputs.tag }} \
           --client-id ${{ secrets.CLIENT_ID }} \ 

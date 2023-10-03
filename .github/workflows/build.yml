@@ -91,9 +91,7 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
         run: |
-          echo "$(pwd)"
-          echo "${{ github.workspace }}"
-          echo "$(ls -a)"
+          npm i
           npm run build -- $CLIENT_ID
 
       - name: Persist tag version
