@@ -84,6 +84,7 @@ jobs:
         shell: bash
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        working-directory: ${{ github.workspace }}
         run: npm run build -- $CLIENT_ID
 
       - name: Persist tag version
