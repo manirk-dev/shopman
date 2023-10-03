@@ -20,6 +20,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+
     environment: ${{ inputs.target }}
     steps:
       # Install node
@@ -81,13 +86,12 @@ jobs:
           --prerelease
         
       - name: Triggering build
-        shell: bash
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        working-directory: ${{ github.workspace }}
         run: |
           echo "$(pwd)"
           echo "${{ github.workspace }}"
+          echo "$(ls -a)"
           npm run build -- $CLIENT_ID
 
       - name: Persist tag version
