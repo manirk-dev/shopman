@@ -16,14 +16,16 @@ on:
         required: true
       PAT_TOKEN:
         required: true
+    outputs:
+      tag:
+        description: "Generated tag version"
+        value: ${{ jobs.build.outputs.tag }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: ${{ github.workspace }}
+    outputs:
+      tag: ${{ steps.prepare-tag.outputs.tag-version }}
 
     environment: ${{ inputs.target }}
     steps:
@@ -53,7 +55,7 @@ jobs:
           version="$(git tag --list --sort=-version:refname "${search}*" | head -n 1)"
           echo "Current version is: $version"
           echo "revision is: $rev is the current"
-          echo "current_tag=${version:-$default_tag}" >> $GITHUB_ENV
+          echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
 
       - name: install @actions/core package
         run: npm i @actions/core
@@ -62,7 +64,7 @@ jobs:
         id: prepare-tag
         uses: './.github/workflows/actions/setup-tag'
         with:
-          tag: ${{ env.current_tag }}
+          tag: ${{ steps.get-tag.outputs.current_tag }}
 
 
       - name: Create Tag

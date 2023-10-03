@@ -38,7 +38,7 @@ jobs:
           ")
           echo "result=$JSON_STRING" >> "$GITHUB_OUTPUT"
 
-  invoke:
+  build:
     name: triggering build workflow
     needs: check
     if: ${{ fromJson(needs.check.outputs.result).check }}
@@ -46,4 +46,13 @@ jobs:
     with:
       target: ${{ inputs.target }}
       branch: ${{ inputs.branch-name }}
+    secrets: inherit
+
+  deploy:
+    name: triggering deployment workflow
+    needs: build
+    uses: ./.github/workflows/deploy.yml
+    with:
+      target: ${{ inputs.target }}
+      tag: ${{ needs.build.outputs.tag }}
     secrets: inherit
