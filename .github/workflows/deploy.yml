@@ -55,4 +55,4 @@ jobs:
           MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
         run: |
           npm i
-          npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message $MESSAGE -f
+          npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message "$MESSAGE" -f
