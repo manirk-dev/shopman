@@ -20,7 +20,7 @@ jobs:
         merge:
           - ${{ github.event_name == 'pull_request' && github.head_ref == 'main' && github.event.pull_request.merged == true }}
         sync:  
-          - ${{ github.event_name != 'pull_request' && github.ref_name != 'main' }}
+          - ${{ github.ref_name != 'main' && github.event.pull_request.merged == false }}
         exclude:
           - { sync: true }
         include:
