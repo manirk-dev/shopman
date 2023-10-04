@@ -32,7 +32,7 @@ jobs:
       - name: Checkout code from repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ matrix.target }}
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
       
