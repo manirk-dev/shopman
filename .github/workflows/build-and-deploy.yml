@@ -24,13 +24,13 @@ jobs:
         exclude:
           - target: staging
             isPRMerge: false
-            isPRPush: true
+            isPRSync: true
           - target: production
             isPRMerge: false
-            isPRPush: true
+            isPRSync: true
           - target: development
             isPRMerge: true
-            isPRPush: false
+            isPRSync: false
     runs-on: ubuntu-latest
     steps:
       - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
