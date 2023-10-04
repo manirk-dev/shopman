@@ -27,14 +27,6 @@ runs:
 
   steps:
 
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - name: Checkout code from repo
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.branch }}
-        fetch-depth: 0
-        token: ${{ inputs.pat-token }}
-
     # Install node
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.8.1

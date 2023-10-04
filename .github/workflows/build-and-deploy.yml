@@ -28,6 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.target }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
       
       - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         id: build
