@@ -27,7 +27,7 @@ inputs:
     description: Github personal access token
 
 runs:
-  uses: "composite"
+  using: "composite"
   steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: Checkout code from repo
