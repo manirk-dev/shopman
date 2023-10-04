@@ -1,98 +1,92 @@
-name: Build and release
+name: Build
+description: Builds the Shopify app extension
+inputs:
+  target:
+    required: true
+    type: string
+    description: Target environment for the build
+  branch:
+    required: true
+    type: string
+    description: Branch that triggered the workflow
+  client-id:
+    required: true
+    type: string
+    description: Client Id of the Shopify app
+  pat-token:
+    required: true
+    type: string
+    dexcription: Github personal access token
+outputs:
+  tag:
+    description: "Generated tag version"
+    value: ${{ steps.prepare-tag.outputs.tag-version }}
 
-on:
-  workflow_call:
-    inputs:
-      target:
-        required: true
-        type: string
-        description: Target environment for the build
-      branch:
-        required: true
-        type: string
-        description: Branch that triggered the workflow
-      client-id:
-        required: true
-        type: string
-        description: Client Id of the Shopify app
-      pat-token:
-        required: true
-        type: string
-        dexcription: Github personal access token
-    outputs:
-      tag:
-        description: "Generated tag version"
-        value: ${{ jobs.build.outputs.tag }}
+runs:
+  using: "composite"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.prepare-tag.outputs.tag-version }}
+  steps:
 
-    environment: ${{ inputs.target }}
-    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout code from repo
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+        fetch-depth: 0
+        token: ${{ inputs.pat-token }}
 
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout code from repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch }}
-          fetch-depth: 0
-          token: ${{ inputs.pat-token }}
+    # Install node
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.8.1
 
-      # Install node
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3.8.1
+    - name: Installing package.json dependencies
+      run: npm i
 
-      - name: Installing package.json dependencies
-        run: npm i
+    - name: Config git globals
+      run: |
+        git config --global user.name "$(git log -n 1 --pretty=format:%an)"
+        git config --global user.email "$(git log -n 1 --pretty=format:%ae)"
 
-      - name: Config git globals
-        run: |
-          git config --global user.name "$(git log -n 1 --pretty=format:%an)"
-          git config --global user.email "$(git log -n 1 --pretty=format:%ae)"
+    - name: Get Tag
+      id: get-tag
+      shell: bash
+      run: |
+        search="$(echo "${{ inputs.target }}" | cut -c 1)"
+        default_tag="${search}0.0.0"
+        version="$(git tag --list --sort=-version:refname "${search}*" | head -n 1)"
+        echo "Current version is: $version"
+        echo "revision is: $rev is the current"
+        echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
 
-      - name: Get Tag
-        id: get-tag
-        shell: bash
-        run: |
-          search="$(echo "${{ inputs.target }}" | cut -c 1)"
-          default_tag="${search}0.0.0"
-          version="$(git tag --list --sort=-version:refname "${search}*" | head -n 1)"
-          echo "Current version is: $version"
-          echo "revision is: $rev is the current"
-          echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
+    - name: install @actions/core package
+      run: npm i @actions/core
 
-      - name: install @actions/core package
-        run: npm i @actions/core
-
-      - name: Prepare Tag
-        id: prepare-tag
-        uses: './.github/workflows/actions/setup-tag'
-        with:
-          tag: ${{ steps.get-tag.outputs.current_tag }}
+    - name: Prepare Tag
+      id: prepare-tag
+      uses: './.github/workflows/actions/setup-tag'
+      with:
+        tag: ${{ steps.get-tag.outputs.current_tag }}
 
 
-      - name: Create Tag
-        env: 
-          tag: ${{ steps.prepare-tag.outputs.tag-version }}
-        run: |
-          git tag -a $tag -m "Tag ${{ env.tag }} for ${{ inputs.target }}"
-          git push origin $tag
+    - name: Create Tag
+      env: 
+        tag: ${{ steps.prepare-tag.outputs.tag-version }}
+      run: |
+        git tag -a $tag -m "Tag ${{ env.tag }} for ${{ inputs.target }}"
+        git push origin $tag
 
 
-      - name: Create Release
-        env:
-          tag: ${{ steps.prepare-tag.outputs.tag-version }}
-          GH_TOKEN: ${{ inputs.pat-token }}
-        run: |
-          gh release create "$tag" \
-          --repo "$GITHUB_REPOSITORY" \
-          --title "${GITHUB_REPOSITORY#*/} ${tag#v}" \
-          --generate-notes \
-          --verify-tag \
-          --prerelease
-        
-      - name: Triggering build
-        run: npm run build
+    - name: Create Release
+      env:
+        tag: ${{ steps.prepare-tag.outputs.tag-version }}
+        GH_TOKEN: ${{ inputs.pat-token }}
+      run: |
+        gh release create "$tag" \
+        --repo "$GITHUB_REPOSITORY" \
+        --title "${GITHUB_REPOSITORY#*/} ${tag#v}" \
+        --generate-notes \
+        --verify-tag \
+        --prerelease
+      
+    - name: Triggering build
+      run: npm run build

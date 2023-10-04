@@ -1,75 +1,71 @@
 name: Deployment
+description: Deploy Shopify app extension, version and release
+inputs:
+  target:
+    required: true
+    type: string
+    description: Target environment for the build
+  tag:
+    required: true
+    type: string
+    description: Github release tag name
+  branch:
+    required: true
+    type: string
+    description: Branch that triggered the workflow
+  client-id:
+    required: true
+    type: string
+    description: Client Id of the Shopify app
+  partners-token:
+    required: true
+    type: string
+    description: Access token for deploying Shopify extensions
+  pat-token:
+    required: true
+    type: string
+    description: Github personal access token
 
-on:
-  workflow_call:
-    inputs:
-      target:
-        required: true
-        type: string
-        description: Target environment for the build
-      tag:
-        required: true
-        type: string
-        description: Github release tag name
-      branch:
-        required: true
-        type: string
-        description: Branch that triggered the workflow
-      client-id:
-        required: true
-        type: string
-        description: Client Id of the Shopify app
-      partners-token:
-        required: true
-        type: string
-        description: Access token for deploying Shopify extensions
-      pat-token:
-        required: true
-        type: string
-        description: Github personal access token
+runs:
+  uses: "composite"
+  steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: Checkout code from repo
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+        fetch-depth: 0
+        token: ${{ inputs.pat-token }}
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.target }}
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout code from repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch }}
-          fetch-depth: 0
-          token: ${{ inputs.pat-token }}
+    # Install node
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.8.1
 
-      # Install node
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3.8.1
+    - name: Installing package.json dependencies
+      run: npm i
 
-      - name: Installing package.json dependencies
-        run: npm i
+    - name: Install ruby and bundler. Required for Theme App Extensions
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2' # Not needed with a .ruby-version file
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+        
+    - name: Prepare toml for deployment
+      shell: bash
+      run: |
+        touch shopify.app.toml
+        cp shopify.app.${{ inputs.target }}.toml shopify.app.toml
+        sed -i "s/REPLACE/${{ inputs.client-id }}/g" shopify.app.toml
+    
+    - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
+      env:
+        SHOPIFY_CLI_PARTNERS_TOKEN: ${{ inputs.partners-token }}
+        SHOPIFY_API_KEY: ${{ inputs.client-id }}
+        COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
+      run: |
+        npm i
+        npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message "$MESSAGE" -f
 
-      - name: Install ruby and bundler. Required for Theme App Extensions
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2' # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-          
-      - name: Prepare toml for deployment
-        shell: bash
-        run: |
-          touch shopify.app.toml
-          cp shopify.app.${{ inputs.target }}.toml shopify.app.toml
-          sed -i "s/REPLACE/${{ inputs.client-id }}/g" shopify.app.toml
-      
-      - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
-        env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ inputs.partners-token }}
-          SHOPIFY_API_KEY: ${{ inputs.client-id }}
-          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-          MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
-        run: |
-          npm i
-          npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message "$MESSAGE" -f
-
-      - name: Clean-up after deploy
-        run: rm shopify.app.toml
+    - name: Clean-up after deploy
+      run: rm shopify.app.toml
