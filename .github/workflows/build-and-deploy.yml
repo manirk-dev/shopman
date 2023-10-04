@@ -17,29 +17,17 @@ jobs:
     strategy:
       matrix:
         target: [ development, staging, production ]
-        isPRMerge: 
+        merge:
           - ${{ github.event_name == 'pull_request' && github.head_ref == 'main' && github.event.pull_request.merged == true }}
-        isPRSync: 
-          - ${{ github.event_name != 'pull_request' && github.ref_name != 'main' && github.event.pull_request.merged == false }}
+        sync:  
+          - ${{ github.event_name != 'pull_request' && github.ref_name != 'main' }}
         exclude:
-          - target: staging
-            isPRSync: true
-          - target: staging
-            isPRMerge: false
-          - target: production
-            isPRSync: true
-          - target: production
-            isPRMerge: false
-          - target: development
-            isPRMerge: true
-          - target: development
-            isPRSync: false
+          - { sync: true }
+        include:
+          - { target: development }
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
-
-      - name: Checkout code from repo
-        uses: actions/checkout@v4
       
       - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         id: build
