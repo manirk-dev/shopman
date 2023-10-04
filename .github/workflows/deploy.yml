@@ -47,6 +47,13 @@ jobs:
           ruby-version: '3.2' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           
+      - name: Prepare toml for deployment
+        shell: bash
+        run: |
+          touch shopify.app.toml
+          cp shopify.app.${{ inputs.target }}.toml shopify.app.toml
+          sed -i "s/REPLACE/${{ secrets.CLIENT_ID }}/g" shopify.app.toml
+      
       - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
         env:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.CLIENT_ID }}
@@ -56,3 +63,6 @@ jobs:
         run: |
           npm i
           npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message "$MESSAGE" -f
+
+      - name: Clean-up after deploy
+        run: rm shopify.app.toml
