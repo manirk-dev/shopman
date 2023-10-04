@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
       
       - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         id: build
