@@ -15,11 +15,18 @@ on:
         required: true
         type: string
         description: Branch that triggered the workflow
-    secrets:
-      CLIENT_ID:
+      client-id:
         required: true
-      SHOPIFY_CLI_TOKEN:
+        type: string
+        description: Client Id of the Shopify app
+      partners-token:
         required: true
+        type: string
+        description: Access token for deploying Shopify extensions
+      pat-token:
+        required: true
+        type: string
+        description: Github personal access token
 
 jobs:
   deploy:
@@ -32,7 +39,7 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ inputs.pat-token }}
 
       # Install node
       - name: Setup Node.js environment
@@ -52,12 +59,12 @@ jobs:
         run: |
           touch shopify.app.toml
           cp shopify.app.${{ inputs.target }}.toml shopify.app.toml
-          sed -i "s/REPLACE/${{ secrets.CLIENT_ID }}/g" shopify.app.toml
+          sed -i "s/REPLACE/${{ inputs.client-id }}/g" shopify.app.toml
       
       - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
         env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_TOKEN }}
-          SHOPIFY_API_KEY: ${{ secrets.CLIENT_ID }}
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ inputs.partners-token }}
+          SHOPIFY_API_KEY: ${{ inputs.client-id }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
         run: |

@@ -32,18 +32,26 @@ jobs:
             isPRMerge: true
             isPRSync: false
     runs-on: ubuntu-latest
+    environment: ${{ matrix.target }}
     steps:
+      
       - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         id: build
-        uses: ./.github/workflows/build.yml
+        uses: ./.github/workflows/actions/build
         with:
           target: ${{ matrix.target }}
           branch: ${{ github.head_ref || github.ref_name }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+
         
       - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
-        uses: ./.github/workflows/deploy.yml
+        uses: ./.github/workflows/actions/deploy
         with:
           target: ${{ matrix.target }}
           branch: ${{ github.head_ref || github.ref_name }}
           tag: ${{ steps.build.outputs.tag }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+          partners-token: ${{ secrets.SHOPIFY_CLI_TOKEN }}
     

@@ -11,11 +11,14 @@ on:
         required: true
         type: string
         description: Branch that triggered the workflow
-    secrets:
-      CLIENT_ID:
+      client-id:
         required: true
-      PAT_TOKEN:
+        type: string
+        description: Client Id of the Shopify app
+      pat-token:
         required: true
+        type: string
+        dexcription: Github personal access token
     outputs:
       tag:
         description: "Generated tag version"
@@ -36,7 +39,7 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ inputs.pat-token }}
 
       # Install node
       - name: Setup Node.js environment
@@ -82,7 +85,7 @@ jobs:
       - name: Create Release
         env:
           tag: ${{ steps.prepare-tag.outputs.tag-version }}
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ inputs.pat-token }}
         run: |
           gh release create "$tag" \
           --repo "$GITHUB_REPOSITORY" \
