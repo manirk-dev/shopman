@@ -10,18 +10,40 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build-env:
     strategy:
       matrix:
         target: [ development, staging, production ]
-    name: ${{ matrix.target }} build on ${{ github.head_ref || github.ref_name }} branch
-    uses: ./.github/workflows/check.yml
-    with:
-      target: ${{ matrix.target }}
-      branch-name: ${{ github.head_ref || github.ref_name }}
-    secrets: inherit
-    
-    # The type of runner that the job will run on
+        isPRMerge: 
+          - ${{ github.head_ref == 'main' && github.event.pull_request.merged == true }}
+        isPRSync: 
+          - ${{ github.head_ref == null && github.ref_name != 'main' && github.event.pull_request.merged == false }}
+        exclude:
+          - target: staging
+            isPRMerge: false
+            isPRPush: true
+          - target: production
+            isPRMerge: false
+            isPRPush: true
+          - target: development
+            isPRMerge: true
+            isPRPush: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        id: build
+        uses: ./.github/workflows/build.yml
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+        
+      - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        uses: ./.github/workflows/deploy.yml
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          tag: ${{ steps.build.outputs.tag }}
     

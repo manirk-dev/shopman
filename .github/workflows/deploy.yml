@@ -56,7 +56,7 @@ jobs:
       
       - name: Deploying Shopify extensions on ${{ inputs.target }} app with tag ${{ inputs.tag }}
         env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.CLIENT_ID }}
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_TOKEN }}
           SHOPIFY_API_KEY: ${{ secrets.CLIENT_ID }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
