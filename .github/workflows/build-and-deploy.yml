@@ -1,0 +1,58 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build and deploy
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        target: [ development, staging, production ]
+        merge:
+          - ${{ github.event_name == 'pull_request' && github.head_ref == 'main' && github.event.pull_request.merged == true }}
+        sync:  
+          - ${{ github.ref_name != 'main' && github.event.pull_request.merged == false }}
+        exclude:
+          - { sync: true }
+        include:
+          - { target: development }
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.target }}
+    steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+      
+      - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        id: build
+        uses: ./.github/workflows/actions/build
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+
+        
+      - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        uses: ./.github/workflows/actions/deploy
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          tag: ${{ steps.build.outputs.tag }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+          partners-token: ${{ secrets.SHOPIFY_CLI_TOKEN }}
+    
