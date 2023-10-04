@@ -23,9 +23,10 @@ jobs:
         sync:  
           - ${{ github.ref_name != 'main' && github.event.pull_request.merged == false }}
         exclude:
-          - { sync: true }
-        include:
-          - { target: development }
+          - { target: development, merge: true }
+          - { target: staging, sync: true }
+          - { target: production, sync: true }
+          - { merge: false, sync: false }
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
