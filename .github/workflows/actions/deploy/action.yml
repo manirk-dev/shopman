@@ -42,6 +42,7 @@ runs:
       uses: actions/setup-node@v3.8.1
 
     - name: Installing package.json dependencies
+      shell: bash
       run: npm i
 
     - name: Install ruby and bundler. Required for Theme App Extensions
@@ -63,9 +64,11 @@ runs:
         SHOPIFY_API_KEY: ${{ inputs.client-id }}
         COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         MESSAGE: ${{ github.event_name == 'pull_request' && github.event.pull_request.title || github.actor }}
+      shell: bash
       run: |
         npm i
         npm run deploy -- --version ${{ inputs.tag }} --source-control-url "$COMMIT_URL" --message "$MESSAGE" -f
 
     - name: Clean-up after deploy
+      shell: bash
       run: rm shopify.app.toml

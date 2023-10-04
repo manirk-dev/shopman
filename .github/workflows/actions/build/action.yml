@@ -40,9 +40,11 @@ runs:
       uses: actions/setup-node@v3.8.1
 
     - name: Installing package.json dependencies
+      shell: bash
       run: npm i
 
     - name: Config git globals
+      shell: bash
       run: |
         git config --global user.name "$(git log -n 1 --pretty=format:%an)"
         git config --global user.email "$(git log -n 1 --pretty=format:%ae)"
@@ -59,6 +61,7 @@ runs:
         echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
 
     - name: install @actions/core package
+      shell: bash
       run: npm i @actions/core
 
     - name: Prepare Tag
@@ -71,6 +74,7 @@ runs:
     - name: Create Tag
       env: 
         tag: ${{ steps.prepare-tag.outputs.tag-version }}
+      shell: bash
       run: |
         git tag -a $tag -m "Tag ${{ env.tag }} for ${{ inputs.target }}"
         git push origin $tag
@@ -80,6 +84,7 @@ runs:
       env:
         tag: ${{ steps.prepare-tag.outputs.tag-version }}
         GH_TOKEN: ${{ inputs.pat-token }}
+      shell: bash
       run: |
         gh release create "$tag" \
         --repo "$GITHUB_REPOSITORY" \
@@ -89,4 +94,5 @@ runs:
         --prerelease
       
     - name: Triggering build
+      shell: bash
       run: npm run build

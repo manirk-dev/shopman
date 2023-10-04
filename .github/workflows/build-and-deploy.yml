@@ -18,18 +18,21 @@ jobs:
       matrix:
         target: [ development, staging, production ]
         isPRMerge: 
-          - ${{ github.head_ref == 'main' && github.event.pull_request.merged == true }}
+          - ${{ github.event_name == 'pull_request' && github.head_ref == 'main' && github.event.pull_request.merged == true }}
         isPRSync: 
-          - ${{ github.head_ref == null && github.ref_name != 'main' && github.event.pull_request.merged == false }}
+          - ${{ github.event_name != 'pull_request' && github.ref_name != 'main' && github.event.pull_request.merged == false }}
         exclude:
           - target: staging
+            isPRSync: true
+          - target: staging
             isPRMerge: false
+          - target: production
             isPRSync: true
           - target: production
             isPRMerge: false
-            isPRSync: true
           - target: development
             isPRMerge: true
+          - target: development
             isPRSync: false
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
