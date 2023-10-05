@@ -38,7 +38,8 @@ jobs:
       max-parallel: 1
       matrix:
         target: [ development, staging, production ]
-        stage: ${{ needs.get-stage.outputs.stage }}
+        stage: 
+          - ${{ needs.get-stage.outputs.stage }}
         exclude:
           - stage: 'invalid'
           - target: development
