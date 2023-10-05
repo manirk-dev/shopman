@@ -37,12 +37,6 @@ jobs:
         run: |
           echo "::error file=build-and-deployment.yml::PR for development build should have the staging branch as base"
           exit 1
-      - name: Check base ref for staging
-        if: steps.stage.outputs.result == 'build-staging' && (github.event_name != 'pull_request' || github.base_ref != 'main')
-        shell: bash
-        run: |
-          echo "::error file=build-and-deployment.yml::PR for staging build should have the main branch as base"
-          exit 1
 
 
   deploy:
@@ -87,8 +81,21 @@ jobs:
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
 
+      - name: check for reverts
+        id: check-revert
+        shell: bash
+        run: |
+          count=$(echo ${{ github.ref_name }} | grep -o revert | wc -l)
+          if [ $(( count % 2 )) -eq 0 ]; then
+            echo "::debug::${{ github.ref_name }} is a revert of revert"
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "::debug::${{ github.ref_name }} is a revert"
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          fi
         
       - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        if: steps.check-revert.outputs.should-deploy
         uses: ./.github/workflows/actions/deploy
         with:
           target: ${{ matrix.target }}
