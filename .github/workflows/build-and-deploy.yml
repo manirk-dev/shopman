@@ -23,7 +23,7 @@ jobs:
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && ${{ github.event.pull_request.merged }} ; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && [ "${{ github.head_ref }}" = "staging" ] && ${{ github.event.pull_request.merged }} ; then
               stage="build-production"
           elif [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" == "staging" ] && ${{ github.event.pull_request.merged }} ; then
               stage="build-staging"
@@ -31,6 +31,19 @@ jobs:
               stage="build-development"
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
+      - name: Check base ref for development
+        if: steps.stage.outputs.result == 'build-development' && (github.event_name != 'pull_request' || github.base_ref != 'staging')
+        shell: bash
+        run: |
+          echo "::error file=build-and-deployment.yml::PR for development build should have the staging branch as base"
+          exit 1
+      - name: Check base ref for staging
+        if: steps.stage.outputs.result == 'build-staging' && (github.event_name != 'pull_request' || github.base_ref != 'main')
+        shell: bash
+        run: |
+          echo "::error file=build-and-deployment.yml::PR for staging build should have the main branch as base"
+          exit 1
+
 
   deploy:
     needs: get-stage
