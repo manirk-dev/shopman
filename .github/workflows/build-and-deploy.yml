@@ -23,17 +23,11 @@ jobs:
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "pull_request" ] 
-            && [ "${{ github.base_ref }}" = "main" ] 
-            && ${{ github.event.pull_request.merged }} ; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && ${{ github.event.pull_request.merged }} ; then
               stage="build-production"
-          elif [ "${{ github.event_name }}" = "pull_request" ]
-            && [ "${{ github.base_ref }}" == "staging" 
-            && ${{ github.event.pull_request.merged }} ; then
+          elif [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" == "staging" ] && ${{ github.event.pull_request.merged }} ; then
               stage="build-staging"
-          elif [ "${{ github.ref_name }}" != "main" ]
-            && [ "${{ github.ref_name }}" != 'staging' ]
-            && ! ${{ github.event.pull_request.merged }} ; then
+          elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
               stage="build-development"
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
