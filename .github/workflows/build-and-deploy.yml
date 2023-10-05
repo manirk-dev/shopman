@@ -14,34 +14,51 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get-stage:
+    runs-on: ubuntu-latest
+    outputs:
+      stage: ${{ steps.stage.outputs.result }}
+    steps:
+      - name: Determine build stage
+        id: stage
+        run: |
+          stage="invalid"
+          if [ "${{ github.event_name }}" = "pull_request" ] 
+            && [ "${{ github.base_ref }}" = "main" ] 
+            && ${{ github.event.pull_request.merged }} ; then
+              stage="build-production"
+          elif [ "${{ github.event_name }}" = "pull_request" ]
+            && [ "${{ github.base_ref }}" == "staging" 
+            && ${{ github.event.pull_request.merged }} ; then
+              stage="build-staging"
+          elif [ "${{ github.ref_name }}" != "main" ]
+            && [ "${{ github.ref_name }}" != 'staging' ]
+            && ! ${{ github.event.pull_request.merged }} ; then
+              stage="build-development"
+          fi
+          echo "result=$stage" >> $GITHUB_OUTPUT
+
   deploy:
+    needs: get-stage
     strategy:
       max-parallel: 1
       matrix:
         target: [ development, staging, production ]
-        stage: |
-          - ${{ (github.event_name == 'pull_request' 
-          && github.base_ref == 'main' 
-          && github.event.pull_request.merged == true) && 'Build Production' || (
-            github.event_name == 'pull_request' 
-            && github.base_ref == 'staging' 
-            && github.event.pull_request.merged == true) && 'Build Staging' || (
-              github.ref_name != 'main' && github.ref_name != 'staging'
-              && github.event.pull_request.merged == false) && 'Build Development' || 'invalid' }}
+        stage: ${{ needs.get-stage.outputs.stage }}
         exclude:
           - stage: 'invalid'
           - target: development
-            stage: 'Build Staging'
+            stage: 'build-staging'
           - target: development
-            stage: 'Build Production'
+            stage: 'build-production'
           - target: staging
-            stage: 'Build Development'
+            stage: 'build-development'
           - target: staging
-            stage: 'Build Production'
+            stage: 'build-production'
           - target: production
-            stage: 'Build Development'
+            stage: 'build-development'
           - target: production
-            stage: 'Build Staging'
+            stage: 'build-staging'
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
