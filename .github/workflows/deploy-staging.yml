@@ -23,7 +23,7 @@ jobs:
       - name: Checkout code from repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: 'main'
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
 
@@ -34,12 +34,12 @@ jobs:
         shell: bash
         run: npm run build
 
-      - name: Build staging on ${{ github.head_ref || github.ref_name }} branch
+      - name: Build staging on main branch
         id: release
         uses: ./.github/workflows/actions/release
         with:
           target: staging
-          branch: ${{ github.head_ref || github.ref_name }}
+          branch: main
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
         
@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/workflows/actions/deploy
         with:
           target: staging
-          branch: ${{ github.head_ref || github.ref_name }}
+          branch: main
           tag: ${{ steps.release.outputs.tag }}
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
