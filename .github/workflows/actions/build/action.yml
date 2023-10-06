@@ -52,9 +52,9 @@ runs:
         echo "revision is: $rev is the current"
         echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
 
-    - name: install @actions/core package
+    - name: install @actions/core and @action/github packages
       shell: bash
-      run: npm i @actions/core
+      run: npm i @actions/core @actions/github
 
     - name: Prepare Tag
       id: prepare-tag

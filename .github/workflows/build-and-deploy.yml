@@ -20,26 +20,13 @@ jobs:
       stage: ${{ steps.stage.outputs.result }}
       deploy: ${{ steps.check-revert.outputs.should-deploy }}
     steps:
-      - name: check for reverts
+
+      - name: Check for reverts
         id: check-revert
-        shell: bash
-        run: |
-          count="$(echo "${{ github.ref_name }}" | grep -o revert | wc -l)"
-          if [ $count > 0 ] && [ $(( count % 2 )) -eq 0 ]; then
-            echo "::debug::${{ github.ref_name }} is a revert of revert"
-            if [ "${{ github.event.action }}" = "opened" ]
-              echo "Revert of revert PR opened. No need for deployment"
-              echo "should-deploy=false" >> $GITHUB_OUTPUT
-            else
-              echo "should-deploy=true" >> $GITHUB_OUTPUT
-            fi
-            echo "should-deploy=true" >> $GITHUB_OUTPUT
-          elif [ $count -eq 0 ]; then
-            echo "::debug::${{ github.ref_name }} is a revert"
-            echo "should-deploy=false" >> $GITHUB_OUTPUT
-          else
-            echo "should-deploy=true" >> $GITHUB_OUTPUT
-          fi
+        uses: './.github/workflows/actions/check-revert'
+        with:
+          source: ${{ github.ref_name }}
+          search: "revert"
 
       - name: Determine build stage
         id: stage
@@ -92,7 +79,6 @@ jobs:
           pat-token: ${{ secrets.PAT_TOKEN }}
         
       - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
-        if: steps.check-revert.outputs.should-deploy
         uses: ./.github/workflows/actions/deploy
         with:
           target: ${{ matrix.target }}

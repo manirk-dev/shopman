@@ -1,0 +1,17 @@
+name: Count Substring
+description: Count occurrences of a substring in a string
+inputs:
+  source:
+    required: true
+    type: string
+    description: String to be searched in
+  search:
+    required: true
+    type: string
+    description: String to be searched for
+outputs:
+  should-deploy:
+    description: Should deployment proceed status based on revert occurrences count
+runs:
+  using: "node20"
+  main: "action.js"
