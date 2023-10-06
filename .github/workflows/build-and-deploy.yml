@@ -49,18 +49,18 @@ jobs:
 
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.deploy && needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'dev-branch'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     
   deploy-staging:
     needs: setup
-    if: needs.setup.outputs.deploy && needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'main-branch'
     uses: './.github/workflows/deploy-staging.yml'
     secrets: inherit
 
   deploy-production:
     needs: setup
-    if: needs.setup.outputs.deploy && needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'main-branch'
     uses: './.github/workflows/deploy-production.yml'
     secrets: inherit
