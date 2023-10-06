@@ -18,7 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       stage: ${{ steps.stage.outputs.result }}
+      deploy: ${{ steps.check-revert.outputs.should-deploy }}
     steps:
+      - name: check for reverts
+        id: check-revert
+        shell: bash
+        run: |
+          count="$(echo "${{ github.ref_name }}" | grep -o revert | wc -l)"
+          if [ $count > 0 ] && [ $(( count % 2 )) -eq 0 ]; then
+            echo "::debug::${{ github.ref_name }} is a revert of revert"
+            if [ "${{ github.event.action }}" = "opened" ]
+              echo "Revert of revert PR opened. No need for deployment"
+              echo "should-deploy=false" >> $GITHUB_OUTPUT
+            else
+              echo "should-deploy=true" >> $GITHUB_OUTPUT
+            fi
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          elif [ $count -eq 0 ]; then
+            echo "::debug::${{ github.ref_name }} is a revert"
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine build stage
         id: stage
         run: |
@@ -29,10 +51,12 @@ jobs:
               stage="dev-branch"
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
+      
 
 
   deploy:
     needs: get-stage
+    if: needs.get-stage.outputs.deploy
     strategy:
       max-parallel: 1
       matrix:
@@ -66,25 +90,6 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
-
-      - name: check for reverts
-        id: check-revert
-        shell: bash
-        run: |
-          count="$(echo "${{ github.ref_name }}" | grep -o revert | wc -l)"
-          if [ $count > 0 ] && [ $(( count % 2 )) -eq 0 ]; then
-            echo "::debug::${{ github.ref_name }} is a revert of revert"
-            if [ ${{ github.event.action }} = "opened" ]
-              echo "Revert of revert PR opened. No need for deployment"
-              echo "should-deploy=false" >> $GITHUB_OUTPUT
-            else
-              echo "should-deploy=true" >> $GITHUB_OUTPUT
-            fi
-            echo "should-deploy=true" >> $GITHUB_OUTPUT
-          elif [ $count -eq 0 ]; then
-            echo "::debug::${{ github.ref_name }} is a revert"
-            echo "should-deploy=false" >> $GITHUB_OUTPUT
-          fi
         
       - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         if: steps.check-revert.outputs.should-deploy
