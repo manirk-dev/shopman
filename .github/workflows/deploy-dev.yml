@@ -2,6 +2,15 @@ name: Deployment in development
 
 on:
   workflow_call:
+    inputs:
+      deploy:
+        required: true
+        type: string
+        description: Deployment flag
+      branch:
+        required: true
+        type: string
+        description: Name of the branch that triggered the event
     secrets:
       CLIENT_ID:
         required: true
@@ -34,20 +43,22 @@ jobs:
         shell: bash
         run: npm run build
 
-      - name: Build development on ${{ github.head_ref || github.ref_name }} branch
+      - name: Create Github release for development
+        if: ${{ inputs.deploy == 'true' }}
         id: release
         uses: ./.github/workflows/actions/release
         with:
           target: development
-          branch: ${{ github.head_ref || github.ref_name }}
+          branch: ${{ inputs.branch }}
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
         
-      - name: Deploy development on ${{ github.head_ref || github.ref_name }} branch
+      - name: Deploy development on ${{ inputs.branch }} branch
+        if: ${{ inputs.deploy == 'true' }}
         uses: ./.github/workflows/actions/deploy
         with:
           target: development
-          branch: ${{ github.head_ref || github.ref_name }}
+          branch: ${{ inputs.branch }}
           tag: ${{ steps.release.outputs.tag }}
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}

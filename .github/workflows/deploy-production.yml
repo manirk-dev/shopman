@@ -2,6 +2,11 @@ name: Deployment in production
 
 on:
   workflow_call:
+    inputs:
+      deploy:
+        required: true
+        type: boolean
+        description: Deployment flag
     secrets:
       CLIENT_ID:
         required: true
@@ -34,7 +39,8 @@ jobs:
         shell: bash
         run: npm run build
 
-      - name: Build production on ${{ github.head_ref || github.ref_name }} branch
+      - name: Create Github release for production
+        if: ${{ inputs.deploy == 'true' }}
         id: release
         uses: ./.github/workflows/actions/release
         with:
@@ -43,7 +49,8 @@ jobs:
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
         
-      - name: Deploy production on ${{ github.head_ref || github.ref_name }} branch
+      - name: Deploy production on main branch
+        if: ${{ inputs.deploy == 'true' }}
         uses: ./.github/workflows/actions/deploy
         with:
           target: production
