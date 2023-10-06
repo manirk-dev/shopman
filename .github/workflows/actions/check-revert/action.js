@@ -6,7 +6,7 @@ try {
     const source = core.getInput("source")
     const search = core.getInput("search")
 
-    const eventType = github.context.action
+    const eventType = github.context.payload.action
 
     console.log("Event Type: ", eventType)
 
