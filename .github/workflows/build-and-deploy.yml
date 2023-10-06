@@ -14,11 +14,11 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  setup:
+  get-stage:
     runs-on: ubuntu-latest
     outputs:
       stage: ${{ steps.stage.outputs.result }}
-      deploy: ${{ steps.check-revert.outputs.deploy }}
+      deploy: ${{ steps.check-revert.outputs.should-deploy }}
     steps:
 
       - name: Checkout code from repo
@@ -47,20 +47,51 @@ jobs:
           echo "result=$stage" >> $GITHUB_OUTPUT
       
 
-  deploy-dev:
-    needs: setup
-    if: needs.setup.outputs.stage == 'dev-branch'
-    uses: './.github/workflows/deploy-dev.yml'
-    secrets: inherit
-    
-  deploy-staging:
-    needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
-    uses: './.github/workflows/deploy-staging.yml'
-    secrets: inherit
 
-  deploy-production:
-    needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
-    uses: './.github/workflows/deploy-production.yml'
-    secrets: inherit
+  deploy:
+    needs: get-stage
+    if: needs.get-stage.outputs.deploy
+    strategy:
+      max-parallel: 1
+      matrix:
+        target: [ development, staging, production ]
+        stage: 
+          - ${{ needs.get-stage.outputs.stage }}
+        exclude:
+          - stage: 'invalid'
+          - target: development
+            stage: 'main-branch'
+          - target: staging
+            stage: 'dev-branch'
+          - target: production
+            stage: 'dev-branch'
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.target }}
+    steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+      
+      - name: Build ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        id: build
+        uses: ./.github/workflows/actions/build
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+        
+      - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
+        uses: ./.github/workflows/actions/deploy
+        with:
+          target: ${{ matrix.target }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          tag: ${{ steps.build.outputs.tag }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+          partners-token: ${{ secrets.SHOPIFY_CLI_TOKEN }}
+    
