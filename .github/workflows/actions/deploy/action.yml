@@ -29,15 +29,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-
-    # Install node
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v3.8.1
-
-    - name: Installing package.json dependencies
-      shell: bash
-      run: npm i
 
     - name: Install ruby and bundler. Required for Theme App Extensions
       uses: ruby/setup-ruby@v1
