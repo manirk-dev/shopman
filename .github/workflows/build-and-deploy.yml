@@ -24,6 +24,10 @@ jobs:
       - name: Checkout code from repo
         uses: actions/checkout@v4
 
+      - name: install @actions/core and @action/github packages
+        shell: bash
+        run: npm i @actions/core @actions/github
+
       - name: Check for reverts
         id: check-revert
         uses: './.github/workflows/actions/check-revert'
