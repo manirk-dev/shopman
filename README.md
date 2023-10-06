@@ -5,6 +5,8 @@ This is a template for building a [Shopify app](https://shopify.dev/docs/apps/ge
 <!-- TODO: Uncomment this after we've started using the template in the CLI -->
 <!-- Rather than cloning this repo, you can use your preferred package manager and the Shopify CLI with [these steps](#installing-the-template). -->
 
+![build status](https://github.com/manirk-dev/shopman/actions/workflows/build-and-deploy.yml/badge.svg?branch=main)
+
 ## Quick start
 
 ### Prerequisites
