@@ -1,20 +1,9 @@
 name: Prepare
 description: Prepares environment before release and deploy
-inputs:
-  pat-token:
-    required: true
-    type: string
-    dedscription: Token for accessing github
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout code from repo
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.head_ref || github.ref_name }}
-        fetch-depth: 0
-        token: ${{ inputs.pat-token }}
 
     # Install node
     - name: Setup Node.js environment

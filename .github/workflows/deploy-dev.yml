@@ -19,10 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+          
       - name: Prepare environment
         uses: './.github/workflows/actions/prepare'
-        with:
-          pat-token: ${{ secrets.PAT_TOKEN }}
 
       - name: Triggering build
         shell: bash
