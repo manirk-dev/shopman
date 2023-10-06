@@ -1,15 +1,10 @@
 name: Count Substring
 description: Count occurrences of a substring in a string
 inputs:
-  pr-head-ref:
+  source:
+    required: true
     type: string
-    description: Branch name from PR head ref to be searched in
-  gh-head-ref:
-    type: string
-    description: Branch name from Github head ref to be searched in
-  gh-ref:
-    type: string
-    description: Branch name from Github ref to be searched in
+    description: String to be searched in
   search:
     required: true
     type: string
