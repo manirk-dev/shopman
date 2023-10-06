@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       stage: ${{ steps.stage.outputs.result }}
-      deploy: ${{ steps.check-revert.outputs.should-deploy }}
+      deploy: ${{ steps.check-revert.outputs.deploy }}
     steps:
 
       - name: Checkout code from repo
@@ -32,14 +32,14 @@ jobs:
         id: check-revert
         uses: './.github/workflows/actions/check-revert'
         with:
-          source: ${{ github.head_ref }}
+          source: ${{ github.ref_name }}
           search: "revert"
 
       - name: Determine build stage
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && ${{ github.event.pull_request.merged }} ; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && [ "${{ github.head_ref }}" = "staging" ] && ${{ github.event.pull_request.merged }} ; then
               stage="main-branch"
           elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
               stage="dev-branch"
@@ -49,18 +49,18 @@ jobs:
 
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.stage == 'dev-branch'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     
   deploy-staging:
     needs: setup
-    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.stage == 'main-branch'
     uses: './.github/workflows/deploy-staging.yml'
     secrets: inherit
 
   deploy-production:
     needs: setup
-    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.stage == 'main-branch'
     uses: './.github/workflows/deploy-production.yml'
     secrets: inherit
