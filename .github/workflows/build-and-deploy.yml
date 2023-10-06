@@ -14,19 +14,57 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get-stage:
+    runs-on: ubuntu-latest
+    outputs:
+      stage: ${{ steps.stage.outputs.result }}
+      deploy: ${{ steps.check-revert.outputs.should-deploy }}
+    steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+
+      - name: install @actions/core and @action/github packages
+        shell: bash
+        run: npm i @actions/core @actions/github
+
+      - name: Check for reverts
+        id: check-revert
+        uses: './.github/workflows/actions/check-revert'
+        with:
+          source: ${{ github.ref_name }}
+          search: "revert"
+
+      - name: Determine build stage
+        id: stage
+        run: |
+          stage="invalid"
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && [ "${{ github.head_ref }}" = "staging" ] && ${{ github.event.pull_request.merged }} ; then
+              stage="main-branch"
+          elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
+              stage="dev-branch"
+          fi
+          echo "result=$stage" >> $GITHUB_OUTPUT
+      
+
+
   deploy:
+    needs: get-stage
+    if: needs.get-stage.outputs.deploy
     strategy:
+      max-parallel: 1
       matrix:
         target: [ development, staging, production ]
-        merge:
-          - ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.merged == true }}
-        sync:  
-          - ${{ github.ref_name != 'main' && github.event.pull_request.merged == false }}
+        stage: 
+          - ${{ needs.get-stage.outputs.stage }}
         exclude:
-          - { target: development, merge: true }
-          - { target: staging, sync: true }
-          - { target: production, sync: true }
-          - { merge: false, sync: false }
+          - stage: 'invalid'
+          - target: development
+            stage: 'main-branch'
+          - target: staging
+            stage: 'dev-branch'
+          - target: production
+            stage: 'dev-branch'
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
@@ -46,7 +84,6 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           client-id: ${{ secrets.CLIENT_ID }}
           pat-token: ${{ secrets.PAT_TOKEN }}
-
         
       - name: Deploy ${{ matrix.target }} on ${{ github.head_ref || github.ref_name }} branch
         uses: ./.github/workflows/actions/deploy
