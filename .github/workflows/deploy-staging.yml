@@ -1,0 +1,54 @@
+name: Deployment in staging
+
+on:
+  workflow_call:
+    secrets:
+      CLIENT_ID:
+        required: true
+        description: Client ID of the Shopify staging app
+      PAT_TOKEN:
+        required: true
+        description: Token required to access Github
+      SHOPIFY_CLI_TOKEN:
+        required: true
+        description: Shopify partners token required for deployment
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Prepare environment
+        uses: './.github/workflows/actions/prepare'
+
+      - name: Triggering build
+        shell: bash
+        run: npm run build
+
+      - name: Build staging on ${{ github.head_ref || github.ref_name }} branch
+        id: release
+        uses: ./.github/workflows/actions/release
+        with:
+          target: staging
+          branch: ${{ github.head_ref || github.ref_name }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+        
+      - name: Deploy staging on ${{ github.head_ref || github.ref_name }} branch
+        uses: ./.github/workflows/actions/deploy
+        with:
+          target: staging
+          branch: ${{ github.head_ref || github.ref_name }}
+          tag: ${{ steps.release.outputs.tag }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          pat-token: ${{ secrets.PAT_TOKEN }}
+          partners-token: ${{ secrets.SHOPIFY_CLI_TOKEN }}

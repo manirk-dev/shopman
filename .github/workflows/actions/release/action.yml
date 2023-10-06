@@ -24,22 +24,7 @@ outputs:
 
 runs:
   using: "composite"
-
   steps:
-
-    # Install node
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v3.8.1
-
-    - name: Installing package.json dependencies
-      shell: bash
-      run: npm i
-
-    - name: Config git globals
-      shell: bash
-      run: |
-        git config --global user.name "$(git log -n 1 --pretty=format:%an)"
-        git config --global user.email "$(git log -n 1 --pretty=format:%ae)"
 
     - name: Get Tag
       id: get-tag
@@ -52,16 +37,11 @@ runs:
         echo "revision is: $rev is the current"
         echo "current_tag=${version:-$default_tag}" >> $GITHUB_OUTPUT
 
-    - name: install @actions/core and @action/github packages
-      shell: bash
-      run: npm i @actions/core @actions/github
-
     - name: Prepare Tag
       id: prepare-tag
       uses: './.github/workflows/actions/setup-tag'
       with:
         tag: ${{ steps.get-tag.outputs.current_tag }}
-
 
     - name: Create Tag
       env: 
@@ -70,7 +50,6 @@ runs:
       run: |
         git tag -a $tag -m "Tag ${{ env.tag }} for ${{ inputs.target }}"
         git push origin $tag
-
 
     - name: Create Release
       env:
@@ -84,7 +63,3 @@ runs:
         --generate-notes \
         --verify-tag \
         --prerelease
-      
-    - name: Triggering build
-      shell: bash
-      run: npm run build
