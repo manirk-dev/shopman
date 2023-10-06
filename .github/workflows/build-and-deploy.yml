@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       stage: ${{ steps.stage.outputs.result }}
-      deploy: ${{ steps.check-revert.outputs.deploy }}
+      deploy: ${{ steps.check-revert.outputs.should-deploy }}
     steps:
 
       - name: Checkout code from repo
