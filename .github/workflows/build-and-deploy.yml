@@ -21,6 +21,9 @@ jobs:
       deploy: ${{ steps.check-revert.outputs.should-deploy }}
     steps:
 
+      - name: Checkout code from repo
+        uses: actions/checkout@v4
+
       - name: Check for reverts
         id: check-revert
         uses: './.github/workflows/actions/check-revert'
