@@ -3,10 +3,14 @@ const github = require("@actions/github")
 
 try {
 
-    const source = core.getInput("source")
+    const prHeadRef = core.getInput("pr-head-ref")
+    const ghHeadRef = core.getInput("gh-head-ref")
+    const ghRef = core.getInput("gh-ref")
     const search = core.getInput("search")
 
-    const eventType = github.context.payload.action
+
+    const source = prHeadRef || ghHeadRef || ghRef
+    const eventType = github.context.payload.action || github.context.action
 
     console.log("Event Type: ", eventType)
 
