@@ -6,10 +6,7 @@ name: Build and deploy
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   pull_request:
-    types: [opened, synchronize, ready_for_review] 
-
-  push:
-    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, closed] 
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -29,27 +26,26 @@ jobs:
 
       - name: install @actions/core and @action/github packages
         shell: bash
-        run: |
-          npm i @actions/core @actions/github
-          echo "${{ github.event.pull_request.head.ref }}"
+        run: npm i @actions/core @actions/github
 
       - name: Check for reverts
         id: check-revert
         uses: './.github/workflows/actions/check-revert'
         with:
-          source: ${{ github.event.pull_request.head.ref }}
+          source: ${{ github.head_ref }}
           search: "revert"
 
       - name: Determine build stage
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && ${{ github.event.pull_request.merged }} ; then
               stage="main-branch"
           elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
               stage="dev-branch"
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
+      
 
   deploy-dev:
     needs: setup
