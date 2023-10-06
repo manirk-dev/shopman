@@ -37,9 +37,7 @@ jobs:
         id: check-revert
         uses: './.github/workflows/actions/check-revert'
         with:
-          pr-head-ref: ${{ github.event.pull_request.head.ref }}
-          gh-head-ref: ${{ github.head_ref }}
-          gh-ref: ${{ github.ref_name }}
+          source: ${{ github.event.pull_request.head.ref }}
           search: "revert"
 
       - name: Determine build stage
@@ -55,7 +53,7 @@ jobs:
 
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.deploy == 'something' && needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.deploy == 'true' && needs.setup.outputs.stage == 'dev-branch'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     
