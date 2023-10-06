@@ -24,19 +24,11 @@ jobs:
         run: |
           stage="invalid"
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ] && [ "${{ github.head_ref }}" = "staging" ] && ${{ github.event.pull_request.merged }} ; then
-              stage="build-production"
-          elif [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" == "staging" ] && ${{ github.event.pull_request.merged }} ; then
-              stage="build-staging"
+              stage="main-branch"
           elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
-              stage="build-development"
+              stage="dev-branch"
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
-      - name: Check base ref for development
-        if: steps.stage.outputs.result == 'build-development' && (github.event_name != 'pull_request' || github.base_ref != 'staging')
-        shell: bash
-        run: |
-          echo "::error file=build-and-deployment.yml::PR for development build should have the staging branch as base"
-          exit 1
 
 
   deploy:
@@ -50,17 +42,11 @@ jobs:
         exclude:
           - stage: 'invalid'
           - target: development
-            stage: 'build-staging'
-          - target: development
-            stage: 'build-production'
+            stage: 'main-branch'
           - target: staging
-            stage: 'build-development'
-          - target: staging
-            stage: 'build-production'
+            stage: 'dev-branch'
           - target: production
-            stage: 'build-development'
-          - target: production
-            stage: 'build-staging'
+            stage: 'dev-branch'
     runs-on: ubuntu-latest
     environment: ${{ matrix.target }}
     steps:
@@ -85,7 +71,7 @@ jobs:
         id: check-revert
         shell: bash
         run: |
-          count="$(echo ${{ github.ref_name }} | grep -o revert | wc -l)"
+          count="$(echo "${{ github.ref_name }}" | grep -o revert | wc -l)"
           if [ $count > 0 ] && [ $(( count % 2 )) -eq 0 ]; then
             echo "::debug::${{ github.ref_name }} is a revert of revert"
             if [ ${{ github.event.action }} = "opened" ]
