@@ -10,7 +10,7 @@ try {
         hasExtensions = fs.readdirSync(`${path}/extensions/`, { withFileTypes: true })
             .find(item => item.isDirectory()) ? true : false;
     }
-    const result = result ? "true" : "false";
+    const result = hasExtensions ? "true" : "false";
     core.setOutput("ready", result);
 } catch (error) {
     core.setFailed(error.message)
