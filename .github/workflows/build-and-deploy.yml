@@ -1,18 +1,22 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Build and deploy
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # Triggers the workflow on pull request events but only for the branches other than "main" or "master" branch
   pull_request:
     types: [opened, synchronize, ready_for_review] 
 
-  push:
-    branches: [main]
-
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows you to run this workflow manually from the Actions tab. Takes "environment input from user" and defaults to "development"
   workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Environment for deployment"
+        required: true
+        default: staging
+        options:
+          - staging
+          - production
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -22,10 +26,14 @@ jobs:
     outputs:
       stage: ${{ steps.stage.outputs.result }}
       deploy: ${{ steps.check-revert.outputs.should-deploy }}
+      ready: ${{ steps.check-source.outputs.ready }}
     steps:
 
       - name: Checkout code from repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4.0.0
 
       - name: install @actions/core and @action/github packages
         shell: bash
@@ -45,16 +53,32 @@ jobs:
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "${{ github.ref_name }}" == "main" ]; then
               stage="main-branch"
-          elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
+            else
+              echo "::error file=build-and-deploy.yml::Manual deployments can be triggered only on main branch and for staging and production"
+            fi
+          else 
+            if [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.event.pull_request.merged }}" == "false" ]; then
               stage="dev-branch"
+            else
+              echo "::error file=build-and-deploy.yml::Deployments to development branch has to be on a branch other than main or master"
+            fi
           fi
           echo "result=$stage" >> $GITHUB_OUTPUT
 
+      - name: Check for extensions availability
+        id: check-source
+        uses: './.github/workflows/actions/check-source'
+        with:
+          path: ${{ github.workspace }}
+
+          
+
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.ready == 'true' && needs.setup.outputs.stage == 'dev1-branch' || inputs.environment == 'development'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     with:
@@ -63,7 +87,7 @@ jobs:
     
   deploy-staging:
     needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.ready == 'true' && needs.setup.outputs.stage == 'main-branch' && inputs.environment == 'staging'
     uses: './.github/workflows/deploy-staging.yml'
     secrets: inherit
     with:
@@ -71,7 +95,7 @@ jobs:
 
   deploy-production:
     needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.ready == 'true' && needs.setup.outputs.stage == 'main-branch' && inputs.environment == 'production'
     uses: './.github/workflows/deploy-production.yml'
     secrets: inherit
     with:

@@ -1,0 +1,12 @@
+name: "Check Source"
+description: "Checks if atleast 1 extension is added"
+inputs:
+    path: # id of input
+        description: "workspace path"
+        required: true
+outputs:
+    ready: # id of output
+        description: "If the source has necessary contents for deployment"
+runs:
+    using: "node16"
+    main: "action.js"

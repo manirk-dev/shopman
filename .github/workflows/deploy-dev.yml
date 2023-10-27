@@ -15,9 +15,6 @@ on:
       CLIENT_ID:
         required: true
         description: Client ID of the Shopify development app
-      PAT_TOKEN:
-        required: true
-        description: Token required to access Github
       SHOPIFY_CLI_TOKEN:
         required: true
         description: Shopify partners token required for deployment
@@ -34,7 +31,7 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ github.token }}
           
       - name: Prepare environment
         uses: './.github/workflows/actions/prepare'
@@ -51,7 +48,7 @@ jobs:
           target: development
           branch: ${{ inputs.branch }}
           client-id: ${{ secrets.CLIENT_ID }}
-          pat-token: ${{ secrets.PAT_TOKEN }}
+          pat-token: ${{ github.token }}
         
       - name: Deploy development on ${{ inputs.branch }} branch
         if: ${{ inputs.deploy == 'true' }}
@@ -61,5 +58,5 @@ jobs:
           branch: ${{ inputs.branch }}
           tag: ${{ steps.release.outputs.tag }}
           client-id: ${{ secrets.CLIENT_ID }}
-          pat-token: ${{ secrets.PAT_TOKEN }}
+          pat-token: ${{ github.token }}
           partners-token: ${{ secrets.SHOPIFY_CLI_TOKEN }}
