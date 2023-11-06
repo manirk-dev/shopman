@@ -58,7 +58,7 @@ jobs:
             else
               echo "::error file=build-and-deploy.yml::Manual deployment can only be triggered on main branch and only for staging or production environment"
             fi
-          elsif [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+          elif [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             if [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.event.pull_request.merged }}" == "false" ]; then
               stage="dev-branch"
             else
