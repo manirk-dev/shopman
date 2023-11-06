@@ -8,11 +8,18 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review] 
 
-  push:
-    branches: [main]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Environment for deployment
+        required: true
+        default: development
+        options:
+          - development
+          - staging
+          - production
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -45,16 +52,28 @@ jobs:
         id: stage
         run: |
           stage="invalid"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" = "main" ]; then
+
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "${{ github.ref_name }}" == "main" ]; then
               stage="main-branch"
-          elif [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.ref_name }}" != 'staging' ] && ! ${{ github.event.pull_request.merged }} ; then
+            else
               stage="dev-branch"
+            fi
+          elif [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            if [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.event.pull_request.merged }}" == "false" ]; then
+              stage="dev-branch"
+            else
+              echo "::error file=build-and-deploy.yml::Deployment to development is only allowed on a non main and non master branch"
+            fi
           fi
+
+          echo "::debug::$stage"
           echo "result=$stage" >> $GITHUB_OUTPUT
 
+    
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.stage == 'dev-branch' || inputs.environment == 'staging'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     with:
@@ -63,7 +82,7 @@ jobs:
     
   deploy-staging:
     needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.stage == 'main-branch' && inputs.environment == 'staging'
     uses: './.github/workflows/deploy-staging.yml'
     secrets: inherit
     with:
@@ -71,7 +90,7 @@ jobs:
 
   deploy-production:
     needs: setup
-    if: needs.setup.outputs.stage == 'main-branch'
+    if: needs.setup.outputs.stage == 'main-branch' && inputs.environment == 'production'
     uses: './.github/workflows/deploy-production.yml'
     secrets: inherit
     with:
