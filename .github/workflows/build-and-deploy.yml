@@ -15,8 +15,9 @@ on:
         type: choice
         description: Environment for deployment
         required: true
-        default: staging
+        default: development
         options:
+          - development
           - staging
           - production
 
@@ -56,7 +57,7 @@ jobs:
             if [ "${{ github.ref_name }}" == "main" ]; then
               stage="main-branch"
             else
-              echo "::error file=build-and-deploy.yml::Manual deployment can only be triggered on main branch and only for staging or production environment"
+              stage="dev-branch"
             fi
           elif [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             if [ "${{ github.ref_name }}" != "main" ] && [ "${{ github.event.pull_request.merged }}" == "false" ]; then
@@ -72,7 +73,7 @@ jobs:
     
   deploy-dev:
     needs: setup
-    if: needs.setup.outputs.stage == 'dev-branch'
+    if: needs.setup.outputs.stage == 'dev-branch' || inputs.environment == 'staging'
     uses: './.github/workflows/deploy-dev.yml'
     secrets: inherit
     with:
