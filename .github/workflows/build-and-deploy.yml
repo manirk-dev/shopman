@@ -28,7 +28,6 @@ jobs:
     outputs:
       stage: ${{ steps.stage.outputs.result }}
       deploy: ${{ steps.check-revert.outputs.should-deploy }}
-      ready: ${{ ste }}
     steps:
 
       - name: Checkout code from repo
